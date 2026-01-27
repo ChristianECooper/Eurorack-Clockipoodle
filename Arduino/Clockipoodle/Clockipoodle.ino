@@ -96,30 +96,39 @@ TODO:
 // Structs
 //////////////////////////////////////////////////////////////////////
 struct customClock{
-  char clockType;
-  int clockCount;
+  char clockType; // Limited to 'X'=OFF, '/'=DIV, '='=DUPE, '*'=MUL
+  int clockCount; // Indicates factor used for '*' and '/' clock types
 };
 
 //////////////////////////////////////////////////////////////////////
 // Enums
 //////////////////////////////////////////////////////////////////////
+// State machine
+// State for main overall mode
 enum DisplayMode{RUN, CONFIG, TAP};
+// Sub-states for CONFIG mode
 enum ConfigMode{SELECT_LINE, SELECT_VALUE, UPDATE_PULSE_WIDTH, UPDATE_DIRECT_BPM_MODE, UPDATE_VALUE};
-enum ConfigLine{A, B, C, D, RETURN};
+// Sub-sub-states for CONFIG/SELECT_VALUE
 enum ConfigOption{FUNCTION, VALUE, LINE_RETURN};
+
+// Lines visible on the config screen
+enum ConfigLine{A, B, C, D, PULSE_WIDTH, BPM_DIRECT, TAP_MODE, RETURN};
 
 //////////////////////////////////////////////////////////////////////
 // Constants
 //////////////////////////////////////////////////////////////////////
 const int CUSTOM_CLOCK_PINS[] = {CLOCK_CUSTOM_1_PIN, CLOCK_CUSTOM_2_PIN, CLOCK_CUSTOM_3_PIN, CLOCK_CUSTOM_4_PIN};
 const char CHANNEL_NAMES[] = "ABCD";
+const byte MIN_BPM = 40;
+const byte MAX_BPM = 260;
 
 //////////////////////////////////////////////////////////////////////
 // Variables
 //////////////////////////////////////////////////////////////////////
+// Construct display
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// Config state
+// Live config
 bool directBpmMode = DEFAULT_DIRECT_BPM_MODE;
 int pulseWidth = DEFAULT_PULSE_WIDTH;
 customClock customClocks[] = {
@@ -150,10 +159,11 @@ bool lastResetState = RELEASED;
 bool lastRunState = RELEASED;
 
 // BPM management
-int bpm = 60;
+int bpm = 120;
 int nextBpm = bpm;
 
 // Event management
+// Tracker of current beat in main clock for DIV cycles
 volatile unsigned long tick = 0;
 volatile unsigned long now = millis();
 volatile unsigned long mainClockDelayMs = (long) (60.0 / bpm * 1000);
@@ -165,7 +175,7 @@ volatile unsigned long customClockDelay[] = {0, 0, 0, 0};
 volatile unsigned long nextCustomClockStart[] = {0, 0, 0, 0};
 volatile unsigned long nextCustomClockFinish[] = {0, 0, 0, 0};
 
-// Tap mode
+// Tap mode, record of timestamps for taps
 long taps[] = {0, 0, 0, 0};
 
 // Start/Stop state
@@ -173,9 +183,10 @@ bool running = true;
 
 // UI
 bool updateDisplay = true;
+// Default starting position of state machine
 DisplayMode displayMode = RUN;
 
-// UI - Config screen
+// UI - Config screen tracking
 ConfigMode configMode = SELECT_LINE; 
 ConfigLine configLine = A;
 ConfigOption configOption = FUNCTION;
@@ -184,6 +195,9 @@ bool configOptionSelected = false;
 //////////////////////////////////////////////////////////////////////
 // Utility functions
 //////////////////////////////////////////////////////////////////////
+/**
+  A version of constrain that wraps values around if they exceed the limits
+*/
 static byte wrap(int value, byte low, byte high) {
   if (value < low) return high;
   if (value > high) return low;
@@ -193,6 +207,9 @@ static byte wrap(int value, byte low, byte high) {
 //////////////////////////////////////////////////////////////////////
 // Event functions
 //////////////////////////////////////////////////////////////////////
+/**
+  Convert BPM and various custom clock mutiplies to durations in milliseconds
+*/
 static void calculateAllClockDelays() {
   mainClockDelayMs = (long) (60.0 / bpm * 1000.0);
   for (int i=0; i < 4; i++) {
@@ -207,6 +224,12 @@ static void calculateAllClockDelays() {
   }
 }
 
+/**
+  Set the next start time for any of the clocks.
+  If allClocks is false, then customCLockIndex of -1 means main clock
+  If initialising is true all the clocks are reset to start from now
+  If restarting is true (only valid for custom clocks), this indicates that a clock has moved out of its OFF state and is now running again
+*/
 static void updateNextStartTime(bool allClocks=false, int customClockIndex=-1, bool initialising=false, bool restarting=false) {
   if (initialising) {
     // Set all clocks to trigger now, except DIV ones
@@ -224,9 +247,11 @@ static void updateNextStartTime(bool allClocks=false, int customClockIndex=-1, b
   if (allClocks) {
     // Move all expired clock start times forward
     if (now > nextMainClockStart) {
+      // Main clock
       nextMainClockStart += mainClockDelayMs;
     }
     for (byte i; i < 4; i++) {
+      // Custom clocks
       if (customClockEnabled[i] && now > nextCustomClockStart[i]) {
         if (customClocks[i].clockType == '=' || customClocks[i].clockType == '*') {
           nextCustomClockStart[i] = nextMainClockStart; 
@@ -239,8 +264,10 @@ static void updateNextStartTime(bool allClocks=false, int customClockIndex=-1, b
   } else {
     // Move a specific clock forward
     if (customClockIndex == -1) {
+      // Main clock
       nextMainClockStart += mainClockDelayMs;
     } else {
+      // Custom clock
       nextCustomClockStart[customClockIndex] += customClockDelay[customClockIndex];
       if (restarting) {
         nextCustomClockStart[customClockIndex] = nextMainClockStart + customClockDelay[customClockIndex];
@@ -255,6 +282,11 @@ static void updateNextStartTime(bool allClocks=false, int customClockIndex=-1, b
   }
 }
 
+/**
+  Shift the finish time for a puls on a clock
+  If allClocks is false, then customCLockIndex of -1 means main clock
+  If initialising is true all the clocks are reset to current start time plus pulse width
+*/
 static void updateNextFinishTime(bool allClocks=false, int customClockIndex=-1, bool initialising=false) {
   if (initialising || allClocks) {
     // Set all active clock's finish times
@@ -275,7 +307,6 @@ static void updateNextFinishTime(bool allClocks=false, int customClockIndex=-1, 
 // UI drawing functions
 //////////////////////////////////////////////////////////////////////
 static void drawTriangle(byte rowOffset, byte colOffset, bool filled = false) {
-  // Allow for previous lines
   byte width = 7;
   byte height = 6;
   if (filled) {
@@ -296,7 +327,6 @@ static void drawTriangle(byte rowOffset, byte colOffset, bool filled = false) {
 }
 
 static void drawReturnArrow(byte rowOffset, byte colOffset) {
-  // Allow for previous lines
   display.drawLine(
     colOffset, rowOffset, 
     colOffset, rowOffset + 4, 
@@ -319,6 +349,9 @@ static void drawReturnArrow(byte rowOffset, byte colOffset) {
   );
 }
 
+/**
+  Display the channel detail sof the selected channel
+*/
 static void prettyChannel(byte channel) {
   /*
   Dumps current state of channel to display at current cursor coordinates
@@ -360,8 +393,10 @@ static void prettyChannel(byte channel) {
 //////////////////////////////////////////////////////////////////////
 // EEPROM management
 //////////////////////////////////////////////////////////////////////
+/**
+  Looks for magic number at end of EEPROM, if it is not there clear the EEPROM, add the magic number and save the default values
+*/
 static void initEEPROM(bool force=false) {
-  // Look for magic number at end of EEPROM, if it is not there clear the EEPROM and add the magic number
   int temp = 0;
   EEPROM.get(EEPROM.length() - 1, temp);
   if (force || temp != MAGIC_NUMBER) {
@@ -373,6 +408,9 @@ static void initEEPROM(bool force=false) {
   }
 }
 
+/**
+  Load previously saved contents of EEPROM into variables
+*/
 static void loadEEPROM() {
   // Increment address as you write
   int address = EEPROM_BASE_ADDRESS;
@@ -389,6 +427,9 @@ static void loadEEPROM() {
   normaliseLoadedValues();
 }
 
+/**
+  Save current state of key variables into EEPROM so we can continue after a power outage
+*/
 static void saveEEPROM() {
   // Increment address as you read
   int address = EEPROM_BASE_ADDRESS;
@@ -403,17 +444,20 @@ static void saveEEPROM() {
   address += sizeof(customClocks);
 }
 
+/**
+  Correct any bad values loaded from potentially corrupted EEPROM
+*/
 static void normaliseLoadedValues(){
   pulseWidth = constrain(pulseWidth, 5, 100);
   
-  bpm = constrain(bpm, 60, 260);
+  bpm = constrain(bpm, MIN_BPM, MAX_BPM);
   nextBpm = bpm;
   
   char ct;
   for (byte i=0; i < 4; i++) {
     ct = customClocks[i].clockType;
     if (ct == 'X' || ct == '*' || ct == '/') {
-      customClocks[i].clockCount = constrain(customClocks[i].clockCount, 1, 64);
+      customClocks[i].clockCount = constrain(customClocks[i].clockCount, 1, 128);
       customClockEnabled[i] = (ct != 'X'); // enable if *, /, or =
     } else {
       // Default the clock to off
@@ -427,6 +471,9 @@ static void normaliseLoadedValues(){
 //////////////////////////////////////////////////////////////////////
 // UI Event handling
 //////////////////////////////////////////////////////////////////////
+/**
+  Select the previous/next function for the custom clock at the given index
+*/
 static void updateFunction(byte index, int change) {
   String current = F(" X/=*");
   String next    = F("*X/=*X");
@@ -442,6 +489,9 @@ static void updateFunction(byte index, int change) {
   customClockEnabled[index] = false;
 }
 
+/**
+  Select the previous/next multiple value for the custom clock at the given index
+*/
 static void updateFunctionParameter(byte index, int change) {
   byte current[] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 32, 64, 128};
   byte next[] = {128, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 32, 64, 128, 2};
@@ -461,8 +511,11 @@ static void allOutputsOff() {
   }
 }
 
+/**
+  Records the timestamps of last 5 rotary encoder movement events, and uses them to determine if we should be scrolling quicker.
+  Returns the amount to increment/decrement by
+*/
 static byte getIncrementFromRotaryUpdateFrequency() {
-  // Timestamps of last 5 rotary encoder movement events
   static long timestamps[] = {0, 0, 0, 0, 0};
   for (byte i = 0; i < 4; i++) {
     timestamps[i] = timestamps[i + 1];
@@ -479,6 +532,9 @@ static byte getIncrementFromRotaryUpdateFrequency() {
 //////////////////////////////////////////////////////////////////////
 // Loop processing for each mode
 //////////////////////////////////////////////////////////////////////
+/**
+  Handles state changes when the state machine is in RUN mode
+*/
 static void loopRunMode() {
   if (rotaryAStateUpdated){
     if (rotaryAState == PRESSED) {
@@ -490,7 +546,7 @@ static void loopRunMode() {
         } else {
           bpm += step;
         }
-        bpm = constrain(bpm, 40, 240);
+        bpm = constrain(bpm, MIN_BPM, MAX_BPM);
         nextBpm = bpm;
         calculateAllClockDelays();
         updateNextStartTime(true);
@@ -502,7 +558,7 @@ static void loopRunMode() {
         } else {
           nextBpm += step;
         }
-        nextBpm = constrain(nextBpm, 40, 240);
+        nextBpm = constrain(nextBpm, MIN_BPM, MAX_BPM);
       }
       updateDisplay = true;
     }
@@ -553,6 +609,9 @@ static void loopRunMode() {
   }
 }
 
+/**
+  Handles state changes when the state machine is in CONFIG mode
+*/
 static void loopConfigMode() {
   // Reset button
   if (resetStateUpdated && resetState == PRESSED) {
@@ -655,12 +714,12 @@ static void loopConfigMode() {
       switch (configMode) {
         case SELECT_LINE:
           // Move to prev/next line
-          configLine = wrap(configLine + dir, 0, CONFIG_RETURN_LINE);
+          configLine = wrap(configLine + dir, A, CONFIG_RETURN_LINE);
           break;
 
         case SELECT_VALUE:
           // Move to prev/next editable value
-          configOption = constrain(configOption + dir, 0, 2);
+          configOption = constrain(configOption + dir, 0, 2); // Function, Count, Return
           break;
 
         case UPDATE_DIRECT_BPM_MODE:
@@ -691,9 +750,12 @@ static void loopConfigMode() {
   }
 }
 
+/**
+  Handles state changes when the state machine is in TAP mode
+*/
 static void loopTapMode() {
   if (rotaryButtonStateUpdated) {
-    if (rotaryButtonState == PRESSED) {
+    if (rotaryButtonState == PRESSED && bpm != nextBpm) {
       bpm = nextBpm;
       calculateAllClockDelays();
       updateNextStartTime(true);
@@ -716,13 +778,14 @@ static void loopTapMode() {
 
   if (runState != lastRunState) {     
     if (runState == PRESSED) {
-      // Add a tap
+      // Record the tap timestamp
       for (byte i = 0; i < 3; i++) {
         taps[i] = taps[i + 1];
       }
       taps[3] = now;
     }
     if (taps[0] != 0) {
+      // Calculate the new BPM as a mean average of the duration between each of the four latest taps
       long temp = 0;
       for (byte i = 0; i < 3; i++) {
         temp += taps[i + 1] - taps[i];
@@ -737,42 +800,49 @@ static void loopTapMode() {
 //////////////////////////////////////////////////////////////////////
 // Display processing for each mode
 //////////////////////////////////////////////////////////////////////
+/**
+  Handles display output when the state machine is in RUN mode
+*/
 static void displayRunMode() {
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(2 * (tick % 3), 0);
   display.setTextSize(2);
+  
+  // Animate the 'BPM'
   display.println('B');
   display.setCursor(2 * ((tick + 1) % 3), 16);
   display.println('P');
   display.setCursor(2 * ((tick + 2) % 3), 32);
   display.println('M'); 
-  // byte h = (byte) (tick / 100);
-  // byte t = (byte) ((tick % 100) / 10);
-  // byte u = (byte) tick % 10;
-  // display.print('B'); display.println(h);
-  // display.print('P'); display.println(t);
-  // display.print('M'); display.println(u);
   display.setCursor(16 + (bpm < 100 ? 24: 0),0);
+
+  // Display current BPM  
   display.setTextSize(6);
   display.println(bpm);
+
   display.setTextSize(2);
   if (nextBpm != bpm) {
+    // DIsplay next BPM if in indirerct BPM mode
     display.print(F("Next: ")); display.println(nextBpm);
   } else if (resetState == PRESSED) {
+    // Indicate the reset button is being held
     display.println(F("   RESET"));
   } else if (!running) {
+    // Indicate that the clock is paused
     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
     display.println(F("   PAUSE   "));
   } else {
+    // Display the function/count of each of the four channels
     display.setTextSize(1);
     prettyChannel(0); display.print(F("  ")); prettyChannel(1); display.println();
     prettyChannel(2); display.print(F("  ")); prettyChannel(3); display.println();
   }
 }
 
+/**
+  Handles display output when the state machine is in CONFIG mode
+*/
 static void displayConfigMode() {
-  // LO(F("displayMode: ")); LO(configMode); LO(F("Option: ")); LO(configOption);
-  
   display.setCursor(0,0);
 
   // Show header
@@ -804,20 +874,21 @@ static void displayConfigMode() {
     text.concat(customClocks[i].clockCount);
     display.println(text);
   }
-  // Other options
+
+  // Show other options
   display.print(F("  Pulse width: ")); display.print(pulseWidth); display.println(F("ms"));
   display.print(F("  BPM direct: ")); display.println(directBpmMode ? F("Y") : F("N"));
   display.println(F("  Enter Tap mode"));
   
-  // Return Option
+  // Show return option to exit config mode
   display.println(F("  Return"));
 
-  // Display cursors
+  // Display triangle cursors
   byte rowOffset = CHAR_HEIGHT * configLine;
   // Row selection indicator
   drawTriangle(rowOffset, 0, configMode == SELECT_VALUE || configMode == UPDATE_PULSE_WIDTH || configMode == UPDATE_DIRECT_BPM_MODE);
 
-  // Back to select row indicator
+  // 'Return to select row' icon if channel A-D currently selected
   if (configMode != SELECT_LINE && configMode != UPDATE_PULSE_WIDTH && configMode != UPDATE_DIRECT_BPM_MODE) {
     drawReturnArrow(rowOffset, CHAR_WIDTH * 15);
   }
@@ -835,17 +906,24 @@ static void displayConfigMode() {
         drawTriangle(rowOffset, CHAR_WIDTH * 13, configMode == UPDATE_VALUE);
     }
   }
-
 }
 
+/**
+  Handles display output when the state machine is in TAP mode
+*/
 static void displayTapMode() {
   display.setTextColor(SSD1306_WHITE);
+  // Header
   display.setCursor(12,0);
   display.setTextSize(2);
   display.println(F("Tap Mode"));
+
+  // Instructions
   display.setTextSize(1);
   display.println(F("Tap Start button to"));
-  display.println(F("set new BPM..."));
+  display.println(F("Set new BPM..."));
+
+  // Count remaining taps before we can set the new BPM
   byte n = 4;
   for (byte i = 0; i < 4; i++) {
     if (taps[i] != 0) {
@@ -853,8 +931,11 @@ static void displayTapMode() {
     }
   }
   if (n > 0) {
+    // Show remaining taps required
     display.print(n); display.println(F(" taps to go"));
+
   } else {
+    // Show new BPM and instructions to apply it
     display.println(F("New BPM:")); 
     display.setTextSize(2);
     display.setCursor(40, 40);
@@ -893,6 +974,7 @@ void setup() {
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     // LOG(F("SSD1306 allocation failed"));
     for(;;) {
+      // Flash the D output if we can't allocate memory - shouldn't happen
       digitalWrite(CLOCK_CUSTOM_4_PIN, HIGH);
       delay(100);
       digitalWrite(CLOCK_CUSTOM_4_PIN, LOW);
@@ -927,8 +1009,10 @@ void setup() {
     initEEPROM(true);
     delay(2000);
   }
-    
+
+  // Init the EEPROM with defaults if required
   initEEPROM();
+  // Load the saved state from the EEPROM and init the clock state
   loadEEPROM();
   calculateAllClockDelays();
   updateNextStartTime(true, -1, true);
@@ -944,19 +1028,20 @@ void setup() {
 }
 
 void loop() {
-  // Read current state
+  // Read current button/rotary encoder state
   rotaryAState = digitalRead(ROTARY_PINA);
   rotaryBState = digitalRead(ROTARY_PINB);
   rotaryButtonState = digitalRead(BUTTON_PIN);
   resetState = digitalRead(RESET_PIN);
   runState = digitalRead(RUN_PIN);
 
-  // Identify important changed states
+  // Identify changed states
   rotaryAStateUpdated = rotaryAState != lastRotaryAState;
   rotaryButtonStateUpdated = rotaryButtonState != lastRotaryButtonState;
   resetStateUpdated = resetState != lastResetState;
   runStateUpdated = runState != lastRunState;
 
+  // Run the loop handler for the current mode
   if (displayMode == RUN) {
     loopRunMode();
   } else if (displayMode == CONFIG) {
@@ -967,7 +1052,7 @@ void loop() {
 
   if (updateDisplay) {
     display.clearDisplay();
-    
+    // Run the display handler for the current mode
     if (displayMode == RUN) {
       displayRunMode();
     } else if (displayMode == CONFIG) {
@@ -977,13 +1062,13 @@ void loop() {
     }
     
     display.display();
-    
     updateDisplay = false;
   }
 
+  // TODO: Place holder so we can see the input on the unused CLK IN jack
   digitalWrite(CLOCK_IN_LED_PIN, digitalRead(CLOCK_IN_PIN));
 
-  // Store curent state to compare against next time
+  // Store curent button/rotary encoder state to compare against next time
   lastRotaryAState = rotaryAState;
   lastRotaryButtonState = rotaryButtonState;
   lastResetState = resetState;
@@ -991,17 +1076,17 @@ void loop() {
 }
 
 //////////////////////////////////////////////////////////////////////
-// Interrupt service routines
+// Interrupt service routine
 //////////////////////////////////////////////////////////////////////
 ISR(TIMER1_COMPA_vect) {
   // Handler for 1ms timer interrupt
   // Set timeout for next interrupt (1ms)
   OCR1A += 16000; // Advance The COMPA Register
   
-  // Look for clock events
+  // Look for clock events occuring
   now = millis();
   if (!running || resetState == PRESSED) {
-    // Move all the event times forward by 1ms, and disable all ouputs
+    // We're paused or resetting, move all the event times forward by 1ms, and disable all ouputs
     nextMainClockStart += 1;
     nextMainClockFinish += 1;
     digitalWrite(CLOCK_PIN, LOW);
@@ -1014,8 +1099,10 @@ ISR(TIMER1_COMPA_vect) {
   } else {
     // Normal running mode
     if (now >= nextMainClockStart) {
+      // Main clock has triggered
       digitalWrite(CLOCK_PIN, HIGH);
       if (resetState != PRESSED) {
+        // Update tick for management of DIVIDED custom clocks
         tick++;
         tick %= 128;
       }
@@ -1024,19 +1111,23 @@ ISR(TIMER1_COMPA_vect) {
     }
     for (byte i = 0; i < 4; i++) {
       if (customClockEnabled[i] && now >= nextCustomClockStart[i]) {
+        // Custom clock has triggered
         digitalWrite(CUSTOM_CLOCK_PINS[i], HIGH);
         updateNextStartTime(false, i);
       }
     }
       
     if (now >= nextMainClockFinish) {
+      // Main clock's pulse has ended
       digitalWrite(CLOCK_PIN, LOW);
       updateNextFinishTime();
     }
     for (byte i=0; i < 4; i++) {
       if (!customClockEnabled[i]) {
+        // Clock shouldn't be enabled
         digitalWrite(CLOCK_PIN, LOW);
       } else if (now >= nextCustomClockFinish[i]) {
+        // Custom clock's pulse has ended
         digitalWrite(CUSTOM_CLOCK_PINS[i], LOW);
         updateNextFinishTime(false, i);
       }
