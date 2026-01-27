@@ -1,0 +1,18 @@
+﻿pos_x,pos_y,rotation,side,designator,mpn,pack,footprint,value,mount_type
+98.116,-157.29,0.0,top,6H,,,MountingHoles_6H_Panel,MountingHoles_6H_Panel,smt
+99.286,-109.338,0.0,top,D15X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+99.286,-124.011,0.0,top,D16X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+99.286,-138.684,0.0,top,D17X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+114.78,-109.338,0.0,top,D18X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+114.78,-124.011,0.0,top,D19X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+114.78,-138.684,0.0,top,D20X,,,MountingHole_3.1mm_LED_D3.0mm_FlatTop,LED,tht
+99.466,-68.664,0.0,top,DS1X,,,MoutingHole_24x12mm_SSD1306_0.96_I2C_Display,~,smt
+123.416,-132.396,0.0,top,J10X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,CLK/16,tht
+108.176,-102.792,0.0,top,J3X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,Clock In,tht
+123.416,-102.792,0.0,top,J6X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,CLK,tht
+108.176,-117.664,0.0,top,J7X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,CLK/2,tht
+123.416,-117.664,0.0,top,J8X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,CLK/4,tht
+108.176,-132.396,0.0,top,J9X,,,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,CLK/8,tht
+112.896,-86.748,0.0,top,SW1X,,,MountingHole_7.1mm_RotaryEncoder_Vertical_H25mm_Dual_PushButton,RotaryEncoder_DualWithSwitch,smt
+108.497,-90.876,-90.0,top,SW2X,,,MountingHole_8.1mm_SW_PUSH_6x6mm,Run/Stop,tht
+117.535,-97.376,90.0,top,SW3X,,,MountingHole_8.1mm_SW_PUSH_6x6mm,Reset,tht

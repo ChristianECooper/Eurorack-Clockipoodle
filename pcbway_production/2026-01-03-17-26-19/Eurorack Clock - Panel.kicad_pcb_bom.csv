@@ -1,0 +1,13 @@
+﻿Designator,Quantity,Value,Footprint,Package,MPN,DNP,Mount_Type,Sim.Pins
+6H,1,MountingHoles_6H_Panel,MountingHoles_6H_Panel,,,,smt,
+"D15X, D16X, D17X, D18X, D19X, D20X",6,LED,MountingHole_3.1mm_LED_D3.0mm_FlatTop,,,,tht,1=K 2=A
+DS1X,1,~,MoutingHole_24x12mm_SSD1306_0.96_I2C_Display,,,,smt,
+J10X,1,CLK/16,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+J3X,1,Clock In,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+J6X,1,CLK,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+J7X,1,CLK/2,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+J8X,1,CLK/4,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+J9X,1,CLK/8,MountingHole_6.0mm_Jack_3.5mm_QingPu_Vertical,,,,tht,
+SW1X,1,RotaryEncoder_DualWithSwitch,MountingHole_7.1mm_RotaryEncoder_Vertical_H25mm_Dual_PushButton,,,,smt,
+SW2X,1,Run/Stop,MountingHole_8.1mm_SW_PUSH_6x6mm,,,,tht,
+SW3X,1,Reset,MountingHole_8.1mm_SW_PUSH_6x6mm,,,,tht,
