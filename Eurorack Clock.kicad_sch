@@ -4119,6 +4119,17 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "Either use the solder jumpers or install\nthe optional jumper to select the source \nvoltage used to drive the circuit.\nAdd the optional L7805 to run the circuit\nfrom the +12V rail if not enough current\nis available on the +5V rail."
+		(exclude_from_sim no)
+		(at 91.948 182.118 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "2cf14805-d386-4629-b36a-003c4255e340")
+	)
 	(text "Optional"
 		(exclude_from_sim no)
 		(at 68.326 186.944 0)
@@ -4138,6 +4149,17 @@
 			)
 		)
 		(uuid "ca3a7ac3-3a41-4906-9605-bd63c9e67268")
+	)
+	(text "Arduino connections to UI"
+		(exclude_from_sim no)
+		(at 90.678 14.732 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "efa4c0b7-c90b-4224-82c0-d406a484e4d1")
 	)
 	(text_box "Power"
 		(exclude_from_sim no)
@@ -4194,6 +4216,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "1b67ccb1-9bfe-4982-bf30-89a0e992b840")
+	)
+	(junction
+		(at 41.91 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1c52c308-3008-4b0a-9b0a-69c8d6023ff3")
 	)
 	(junction
 		(at 191.77 107.95)
@@ -4266,12 +4294,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "468a1ca7-145a-4fda-b666-b2c397a3d050")
-	)
-	(junction
-		(at 43.18 73.66)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "5325b6b0-247a-4301-a802-382bd77ee2b6")
 	)
 	(junction
 		(at 63.5 172.72)
@@ -4599,7 +4621,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 73.66) (xy 43.18 119.38)
+			(xy 41.91 73.66) (xy 41.91 119.38)
 		)
 		(stroke
 			(width 0)
@@ -5749,6 +5771,16 @@
 	)
 	(wire
 		(pts
+			(xy 41.91 73.66) (xy 54.61 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bd55c6f7-4000-4e25-9a05-ae635a13233b")
+	)
+	(wire
+		(pts
 			(xy 48.26 162.56) (xy 48.26 165.1)
 		)
 		(stroke
@@ -5939,7 +5971,7 @@
 	)
 	(wire
 		(pts
-			(xy 31.75 73.66) (xy 43.18 73.66)
+			(xy 31.75 73.66) (xy 41.91 73.66)
 		)
 		(stroke
 			(width 0)
@@ -5976,16 +6008,6 @@
 			(type default)
 		)
 		(uuid "dc40ca72-e4ef-4053-a14f-e98e52b70841")
-	)
-	(wire
-		(pts
-			(xy 43.18 73.66) (xy 54.61 73.66)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dd77352c-e657-4a91-89f7-abfc9c94f313")
 	)
 	(wire
 		(pts
@@ -6039,7 +6061,7 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 119.38) (xy 46.99 119.38)
+			(xy 41.91 119.38) (xy 46.99 119.38)
 		)
 		(stroke
 			(width 0)
@@ -6604,7 +6626,7 @@
 			)
 		)
 	)
-	(global_label "CLK_IN"
+	(global_label "CV_IN"
 		(shape input)
 		(at 54.61 57.15 90)
 		(fields_autoplaced yes)
@@ -6616,7 +6638,7 @@
 		)
 		(uuid "51dad54d-57e4-4a39-9b65-30cc4e922c53")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 54.61 47.6938 90)
+			(at 54.61 48.9033 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6670,7 +6692,7 @@
 			)
 		)
 	)
-	(global_label "CLK{slash}16"
+	(global_label "CLK{slash}D"
 		(shape input)
 		(at 173.99 115.57 90)
 		(fields_autoplaced yes)
@@ -6682,7 +6704,7 @@
 		)
 		(uuid "80cc991d-b859-4951-b2b5-bff7d7c046da")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 173.99 105.2672 90)
+			(at 173.99 106.4162 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6736,7 +6758,7 @@
 			)
 		)
 	)
-	(global_label "CLK{slash}2"
+	(global_label "CLK{slash}A"
 		(shape input)
 		(at 166.37 115.57 90)
 		(fields_autoplaced yes)
@@ -6748,7 +6770,7 @@
 		)
 		(uuid "8e278552-4a7c-4f03-9266-1362902bc03e")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 166.37 106.4767 90)
+			(at 166.37 106.5976 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6758,7 +6780,7 @@
 			)
 		)
 	)
-	(global_label "CLK{slash}4"
+	(global_label "CLK{slash}B"
 		(shape input)
 		(at 168.91 115.57 90)
 		(fields_autoplaced yes)
@@ -6770,7 +6792,7 @@
 		)
 		(uuid "abd07663-b7e3-476f-b207-40010cd7bf07")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 168.91 106.4767 90)
+			(at 168.91 106.4162 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6780,7 +6802,7 @@
 			)
 		)
 	)
-	(global_label "CLK_IN_LED"
+	(global_label "CV_IN_LED"
 		(shape input)
 		(at 161.29 115.57 90)
 		(fields_autoplaced yes)
@@ -6792,7 +6814,7 @@
 		)
 		(uuid "b42ab670-84e0-46d9-8317-90f4da4e49af")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 161.29 101.6991 90)
+			(at 161.29 102.9086 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6824,7 +6846,7 @@
 			)
 		)
 	)
-	(global_label "CLK{slash}8"
+	(global_label "CLK{slash}C"
 		(shape input)
 		(at 171.45 115.57 90)
 		(fields_autoplaced yes)
@@ -6836,7 +6858,7 @@
 		)
 		(uuid "d66776a2-76ba-4764-afb0-21ed87d0d34f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 171.45 106.4767 90)
+			(at 171.45 106.4162 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6955,17 +6977,6 @@
 			(justify left)
 		)
 		(uuid "097f41c0-3c73-4f0b-90ae-6a38d764b5f0")
-	)
-	(hierarchical_label ""
-		(shape input)
-		(at 74.93 44.45 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "0beecf69-1029-4904-8a98-75a3fdf346dd")
 	)
 	(hierarchical_label ""
 		(shape input)
@@ -7101,17 +7112,6 @@
 	)
 	(hierarchical_label ""
 		(shape input)
-		(at 80.01 31.75 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "3e2ab674-8e91-4378-86ff-47031ba24ee0")
-	)
-	(hierarchical_label ""
-		(shape input)
 		(at 165.1 53.34 0)
 		(effects
 			(font
@@ -7142,17 +7142,6 @@
 			(justify left)
 		)
 		(uuid "42da17ab-5278-41c1-9682-9ec8ea4dc9cf")
-	)
-	(hierarchical_label ""
-		(shape input)
-		(at 74.93 44.45 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "45a1dc6b-0924-41c9-9891-f6fa451b7794")
 	)
 	(hierarchical_label ""
 		(shape input)
@@ -7450,17 +7439,6 @@
 			(justify left)
 		)
 		(uuid "a837806c-2de7-4540-9df9-664416eaa615")
-	)
-	(hierarchical_label ""
-		(shape input)
-		(at 76.2 59.69 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "a9dd73cb-63f3-45a0-b37f-76a84a6655d2")
 	)
 	(hierarchical_label ""
 		(shape input)
@@ -10150,7 +10128,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Capacitor_THT:CP_Radial_D10.0mm_P2.50mm"
+		(property "Footprint" "Capacitor_THT:CP_Radial_D5.0mm_P2.50mm"
 			(at 152.0952 99.06 0)
 			(effects
 				(font
@@ -10565,7 +10543,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:C_Disc_D4.7mm_W2.5mm_P5.00mm"
 			(at 137.4648 99.06 0)
 			(effects
 				(font
@@ -10981,7 +10959,7 @@
 				(justify left bottom)
 			)
 		)
-		(property "Sheetfile" "untitled.kicad_sch"
+		(property "Sheetfile" "Control Panel.kicad_sch"
 			(at 165.1 84.4046 0)
 			(effects
 				(font

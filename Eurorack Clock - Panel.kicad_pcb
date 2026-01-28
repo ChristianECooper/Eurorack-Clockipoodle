@@ -791,7 +791,7 @@
 			)
 		)
 		(property "Value" "RotaryEncoder_DualWithSwitch"
-			(at 0.25 3.5 0)
+			(at 0.25 1.252 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "c541a271-349e-449b-8b3f-e47d3c9b3755")
@@ -874,7 +874,7 @@
 			(uuid "d32e80d0-9ba0-4f9f-b20f-89baa6bc17b6")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 5.25 0)
+			(at 0 3.252 0)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "f719704f-8419-4d9e-ba9d-2fdfc19da3fd")

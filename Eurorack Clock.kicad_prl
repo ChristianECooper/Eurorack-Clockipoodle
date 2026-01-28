@@ -44,13 +44,14 @@
       "drawing_sheet",
       "bitmaps",
       "pads",
+      "zones",
       "drc_warnings",
       "drc_exclusions",
       "locked_item_shadows",
       "conflict_shadows",
       "shapes"
     ],
-    "visible_layers": "ffffffff_ffffffff_fffffffd_ffffffdf",
+    "visible_layers": "ffffffff_ffffffff_fffffffd_ffffffff",
     "zone_display_mode": 0
   },
   "git": {
