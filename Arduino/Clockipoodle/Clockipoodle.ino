@@ -539,19 +539,13 @@ static void loopRunMode() {
   if (rotaryAStateUpdated){
     if (rotaryAState == PRESSED) {
       byte step = getIncrementFromRotaryUpdateFrequency();
-      LO(F("Step: ")); LOG(step);
       if (directBpmMode) {
-        LO(F("BPM0: ")); LOG(bpm);
         if (rotaryBState != rotaryAState) { 
           bpm -= step;
         } else {
           bpm += step;
         }
-        LO(F("BPM1: ")); LOG(bpm);
-        LO(F("MIN_BPM: ")); LOG(MIN_BPM);
-        LO(F("MAX_BPM: ")); LOG(MAX_BPM);
         bpm = constrain(bpm, MIN_BPM, MAX_BPM);
-        LO(F("BPM2: ")); LOG(bpm);
         nextBpm = bpm;
         calculateAllClockDelays();
         updateNextStartTime(true);
