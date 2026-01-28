@@ -119,8 +119,8 @@ enum ConfigLine{A, B, C, D, PULSE_WIDTH, BPM_DIRECT, TAP_MODE, RETURN};
 //////////////////////////////////////////////////////////////////////
 const int CUSTOM_CLOCK_PINS[] = {CLOCK_CUSTOM_1_PIN, CLOCK_CUSTOM_2_PIN, CLOCK_CUSTOM_3_PIN, CLOCK_CUSTOM_4_PIN};
 const char CHANNEL_NAMES[] = "ABCD";
-const byte MIN_BPM = 40;
-const byte MAX_BPM = 260;
+const int MIN_BPM = 40;
+const int MAX_BPM = 260;
 
 //////////////////////////////////////////////////////////////////////
 // Variables
@@ -350,7 +350,7 @@ static void drawReturnArrow(byte rowOffset, byte colOffset) {
 }
 
 /**
-  Display the channel detail sof the selected channel
+  Display the channel details of the selected channel
 */
 static void prettyChannel(byte channel) {
   /*
@@ -539,14 +539,19 @@ static void loopRunMode() {
   if (rotaryAStateUpdated){
     if (rotaryAState == PRESSED) {
       byte step = getIncrementFromRotaryUpdateFrequency();
-      
+      LO(F("Step: ")); LOG(step);
       if (directBpmMode) {
+        LO(F("BPM0: ")); LOG(bpm);
         if (rotaryBState != rotaryAState) { 
           bpm -= step;
         } else {
           bpm += step;
         }
+        LO(F("BPM1: ")); LOG(bpm);
+        LO(F("MIN_BPM: ")); LOG(MIN_BPM);
+        LO(F("MAX_BPM: ")); LOG(MAX_BPM);
         bpm = constrain(bpm, MIN_BPM, MAX_BPM);
+        LO(F("BPM2: ")); LOG(bpm);
         nextBpm = bpm;
         calculateAllClockDelays();
         updateNextStartTime(true);
@@ -805,24 +810,24 @@ static void loopTapMode() {
 */
 static void displayRunMode() {
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(2 * (tick % 3), 0);
   display.setTextSize(2);
   
-  // Animate the 'BPM'
+  // 'BPM' Label
+  display.setCursor(0, 0);
   display.println('B');
-  display.setCursor(2 * ((tick + 1) % 3), 16);
+  display.setCursor(0, 16);
   display.println('P');
-  display.setCursor(2 * ((tick + 2) % 3), 32);
+  display.setCursor(0, 32);
   display.println('M'); 
-  display.setCursor(16 + (bpm < 100 ? 24: 0),0);
 
   // Display current BPM  
+  display.setCursor(16 + (bpm < 100 ? 24: 0),0);
   display.setTextSize(6);
   display.println(bpm);
 
   display.setTextSize(2);
   if (nextBpm != bpm) {
-    // DIsplay next BPM if in indirerct BPM mode
+    // Display next BPM if in indirerct BPM mode
     display.print(F("Next: ")); display.println(nextBpm);
   } else if (resetState == PRESSED) {
     // Indicate the reset button is being held
